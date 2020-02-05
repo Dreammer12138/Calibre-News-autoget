@@ -1,0 +1,114 @@
+#!/usr/bin/python3 
+# Name: 		Calibre News Get
+# Author:		Dreammer12138
+# Github:		https://github.com/dreammer12138
+# Description:	Settings
+# -*- coding: utf-8 -*-
+
+import os
+import sys,getopt
+import json
+import re
+
+opts, args = getopt.getopt(sys.argv[1:], "h", [
+	"news-add=",
+	"news-remove=",
+	"news-list",
+	"update-conf",
+	"set-update-time=",
+	"set-update-interval=",
+	"help"])
+
+_path = sys.path[0]
+
+for opt, val in opts :
+	if opt in ("--help", "-h") :
+		print("""
+-h, --help\t\t\t\t帮助
+--news-add\t\t\t\t添加新闻源 --news-add "Global Times"
+--news-remove\t\t\t\t移除新闻源 --news-remove "Global Times"
+--set-update-time\t\t\t设置更新时间 --set-update-time 6:00
+--set-update-interval\t\t\t设置更新间隔[day/week/month] --set-update-interval day
+			""")
+	if opt in ("--news-add") :
+		add_news = val
+		config_file = open("{}/config.json".format(_path), encoding = "utf-8")
+		config = json.loads(config_file.read())
+		config_file.close()
+
+		config['news'].append(add_news)
+		config_file = open("{}/config.json".format(_path), encoding = "utf-8", mode = "w")
+		json.dump(config, config_file)
+		config_file.close()
+
+		print("OK")
+
+	if opt in ("--news-remove") :
+		remove_news = val
+		print(remove_news)
+		config_file = open("{}/config.json".format(_path), encoding = "utf-8")
+		config = json.loads(config_file.read())
+		config_file.close()
+
+		for n in config['news'] :
+			if n == remove_news :
+				config['news'].remove(n)
+
+		config_file = open("{}/config.json".format(_path), encoding = "utf-8", mode = "w")
+		json.dump(config, config_file)
+		config_file.close()
+
+		print("OK")
+
+	if opt in ("--news-list") :
+		config_file = open("{}/config.json".format(_path), encoding = "utf-8")
+		config = json.loads(config_file.read())
+		config_file.close()
+
+		for n in config['news'] :
+			print(n)
+
+		print("OK")
+
+	if opt in ("--update-conf") :
+		config_file = open("{}/config.json".format(_path), encoding = "utf-8")
+		config = json.loads(config_file.read())
+		config_file.close()
+
+		for u in config['update'] :
+			print("{}\t{}".format(u, config['update'][u]))
+
+		print("OK")
+
+	if opt in ("--set-update-time") :
+		time = val
+		config_file = open("{}/config.json".format(_path), encoding = "utf-8")
+		config = json.loads(config_file.read())
+		config_file.close()
+
+		config['update']['time'] = time
+		config_file = open("{}/config.json".format(_path), encoding = "utf-8", mode = "w")
+		json.dump(config, config_file)
+		config_file.close()
+
+		print("OK")	
+	
+	if opt in ("--set-update-interval") :
+		interval = val
+		interval_val = 0
+		if interval == "day" :
+			interval_val = 0
+		elif interval == "week" :
+			interval_val = 6
+		elif interval == "month" :
+			interval_val = 29
+
+		config_file = open("{}/config.json".format(_path), encoding = "utf-8")
+		config = json.loads(config_file.read())
+		config_file.close()
+
+		config['update']['interval'] = interval_val
+		config_file = open("{}/config.json".format(_path), encoding = "utf-8", mode = "w")
+		json.dump(config, config_file)
+		config_file.close()	
+		print("OK")

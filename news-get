@@ -1,0 +1,46 @@
+#!/usr/bin/python3
+
+# Name: 		Calibre News Get
+# Author:		Dreammer12138
+# Github:		https://github.com/dreammer12138
+# Description:	Auto get News
+# -*- coding: utf-8 -*-
+
+import datetime
+import time
+import json
+import re
+import os
+import sys
+
+# 当前脚本路径
+_path = sys.path[0]
+
+# 打开配置文件
+config_file = open("{}/config.json".format(_path), encoding = "utf-8")
+config = json.loads(config_file.read())
+
+# 日志文件
+log_file = "{}/log".format(_path)
+
+# news ras
+news_ras = config['news']
+
+# update time everyday
+update_time = config['update']['time']
+update_time_hour = int(update_time.split(":")[0])
+update_interval = config['update']['interval']
+
+# last time
+last_time = datetime.datetime(1972, 1, 1, 0, 0, 0)
+
+while True :
+	now = datetime.datetime.now()
+	if (now.hour == update_time_hour and (now - last_time).days > update_interval) :
+		last_time = now
+		for n in news_ras :
+			# Today Date
+			today = datetime.date.today()		
+
+			# 利用ebook-conver抓取新闻并储存在Calibre书库中
+			os.system("ebook-convert \"{0}.recipe\" \"{2}/news/{0}_{1}.pdf\" > {2}/log && calibredb add '{2}/news/{0}_{1}.pdf' > {2}/log".format(n, today, _path))
