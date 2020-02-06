@@ -9,11 +9,15 @@ import os
 import sys,getopt
 import json
 import re
+import configset
 
 opts, args = getopt.getopt(sys.argv[1:], "h", [
 	"news-add=",
 	"news-remove=",
+	"news-custom-add",
+	"news-custom-remove",
 	"news-list",
+	"news-custom-list",
 	"update-conf",
 	"set-update-time=",
 	"set-update-interval=",
@@ -27,43 +31,73 @@ for opt, val in opts :
 -h, --help\t\t\t\t帮助
 --news-add\t\t\t\t添加新闻源 --news-add "Global Times"
 --news-remove\t\t\t\t移除新闻源 --news-remove "Global Times"
+--news-custom-add\t\t\t添加自定义新闻源
 --set-update-time\t\t\t设置更新时间 --set-update-time 6:00
 --set-update-interval\t\t\t设置更新间隔[day/week/month] --set-update-interval day
 			""")
 	if opt in ("--news-add") :
 		add_news = val
-		config_file = open("{}/config.json".format(_path), encoding = "utf-8")
-		config = json.loads(config_file.read())
-		config_file.close()
+		config = configset.readconfig("{}/config.json".format(_path))
 
 		config['news'].append(add_news)
-		config_file = open("{}/config.json".format(_path), encoding = "utf-8", mode = "w")
-		json.dump(config, config_file)
-		config_file.close()
+		configset.writeconfig("{}/config.json".format(_path), config)
 
 		print("OK")
 
 	if opt in ("--news-remove") :
 		remove_news = val
 		print(remove_news)
-		config_file = open("{}/config.json".format(_path), encoding = "utf-8")
-		config = json.loads(config_file.read())
-		config_file.close()
+		config = configset.readconfig("{}/config.json".format(_path))
 
 		for n in config['news'] :
 			if n == remove_news :
 				config['news'].remove(n)
 
-		config_file = open("{}/config.json".format(_path), encoding = "utf-8", mode = "w")
-		json.dump(config, config_file)
-		config_file.close()
+		configset.writeconfig("{}/config.json".format(_path), config)
 
 		print("OK")
 
+	if opt in ("--news-custom-add") :
+		news = input('请输入名称：')
+		news_url = input('请输入rss地址：')
+		config = configset.readconfig("{}/recipes/recipe.json".format(_path))
+
+		exist = False
+
+		for newslist in config :
+			if news in newslist :
+				print("RSS已存在")
+				exist = True
+		if exist == False :		
+			config.append([news, news_url])
+			configset.writeconfig("{}/recipes/recipe.json".format(_path), config)
+			configset.add_recipe("{}/recipes/{}.recipe".format(_path, news), "{}/recipes/recipe.json".format(_path), news, news_url)
+
+	if opt in ("--news-custom-remove") :
+		news = input('请输入名称：')
+		config = configset.readconfig("{}/recipes/recipe.json".format(_path))
+		exist = 0
+
+		for newslist in config :
+			if news in newslist :
+				exist = True
+
+		if exist == False :
+			print("RSS不存在")
+		elif exist == True :
+			for newslist in config :
+				if news in newslist :
+					config.remove(newslist)
+
+		configset.writeconfig("{}/recipes/recipe.json".format(_path), config)
+
+	if opt in ("--news-custom-list") :
+		config = configset.readconfig("{}/recipes/recipe.json".format(_path))
+		for newslist in config :
+			print(newslist[0])
+
 	if opt in ("--news-list") :
-		config_file = open("{}/config.json".format(_path), encoding = "utf-8")
-		config = json.loads(config_file.read())
-		config_file.close()
+		config = configset.readconfig("{}/config.json".format(_path))
 
 		for n in config['news'] :
 			print(n)
@@ -71,9 +105,7 @@ for opt, val in opts :
 		print("OK")
 
 	if opt in ("--update-conf") :
-		config_file = open("{}/config.json".format(_path), encoding = "utf-8")
-		config = json.loads(config_file.read())
-		config_file.close()
+		config = configset.readconfig("{}/config.json".format(_path))
 
 		for u in config['update'] :
 			print("{}\t{}".format(u, config['update'][u]))
@@ -82,14 +114,10 @@ for opt, val in opts :
 
 	if opt in ("--set-update-time") :
 		time = val
-		config_file = open("{}/config.json".format(_path), encoding = "utf-8")
-		config = json.loads(config_file.read())
-		config_file.close()
+		config = configset.readconfig("{}/config.json".format(_path))
 
 		config['update']['time'] = time
-		config_file = open("{}/config.json".format(_path), encoding = "utf-8", mode = "w")
-		json.dump(config, config_file)
-		config_file.close()
+		configset.writeconfig("{}/config.json".format(_path), config)
 
 		print("OK")	
 	
@@ -103,12 +131,8 @@ for opt, val in opts :
 		elif interval == "month" :
 			interval_val = 29
 
-		config_file = open("{}/config.json".format(_path), encoding = "utf-8")
-		config = json.loads(config_file.read())
-		config_file.close()
+		config = configset.readconfig("{}/config.json".format(_path))
 
 		config['update']['interval'] = interval_val
-		config_file = open("{}/config.json".format(_path), encoding = "utf-8", mode = "w")
-		json.dump(config, config_file)
-		config_file.close()	
+		configset.writeconfig("{}/config.json".format(_path), config)	
 		print("OK")

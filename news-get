@@ -12,6 +12,7 @@ import json
 import re
 import os
 import sys
+import configset
 
 # 当前脚本路径
 _path = sys.path[0]
@@ -23,8 +24,11 @@ config = json.loads(config_file.read())
 # 日志文件
 log_file = "{}/log".format(_path)
 
-# news ras
-news_ras = config['news']
+# news rss
+news_rss = config['news']
+
+# custom news rss
+custom_rss = configset.readconfig("{}/recipes/recipe.json".format(_path))
 
 # update time everyday
 update_time = config['update']['time']
@@ -38,9 +42,13 @@ while True :
 	now = datetime.datetime.now()
 	if (now.hour == update_time_hour and (now - last_time).days > update_interval) :
 		last_time = now
-		for n in news_ras :
+		print(news_rss)
+		for n in news_rss :
 			# Today Date
 			today = datetime.date.today()		
 
 			# 利用ebook-conver抓取新闻并储存在Calibre书库中
 			os.system("ebook-convert \"{0}.recipe\" \"{2}/news/{0}_{1}.pdf\" > {2}/log && calibredb add '{2}/news/{0}_{1}.pdf' > {2}/log".format(n, today, _path))
+		for c in custom_rss :
+			today = datetime.date.today()
+			os.system("ebook-convert \"{2}/recipes/{0}.recipe\" \"{2}/news/{0}_{1}.pdf\" > {2}/log && calibredb add '{2}/news/{0}_{1}.pdf' > {2}/log".format(c[0], today, _path))
