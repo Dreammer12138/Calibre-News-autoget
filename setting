@@ -11,16 +11,17 @@ import json
 import re
 import configset
 
-opts, args = getopt.getopt(sys.argv[1:], "h", [
+opts, args = getopt.getopt(sys.argv[1:], "hv", [
 	"news-add=",
 	"news-remove=",
-	"news-custom-add",
-	"news-custom-remove",
+	"news-custom-add=",
+	"news-custom-remove=",
 	"news-list",
 	"news-custom-list",
 	"update-conf",
 	"set-update-time=",
 	"set-update-interval=",
+	"version",
 	"help"])
 
 _path = sys.path[0]
@@ -29,12 +30,22 @@ for opt, val in opts :
 	if opt in ("--help", "-h") :
 		print("""
 -h, --help\t\t\t\t帮助
+-v, --version\t\t\t\t版本信息
 --news-add\t\t\t\t添加新闻源 --news-add "Global Times"
 --news-remove\t\t\t\t移除新闻源 --news-remove "Global Times"
---news-custom-add\t\t\t添加自定义新闻源
+--news-list\t\t\t\t列出新闻源 --news-list
+--news-custom-add\t\t\t添加自定义新闻源 --news-custom-add 明日方舟=https://rsshub.app/arknights/news
+--news-custom-remove\t\t\t移除自定义新闻源 --news-custom-remove 明日方舟
+--news-custom-list\t\t\t列出自定义新闻源 --news-custom-list
 --set-update-time\t\t\t设置更新时间 --set-update-time 6:00
 --set-update-interval\t\t\t设置更新间隔[day/week/month] --set-update-interval day
 			""")
+
+	if opt in ("--version", "-v") :
+		version = configset.readconfig("{}/config.json".format(_path))['version']
+		print("Calibre News autoget version {}".format(version))
+		print("For more information, please visit https://github.com/dreammer12138/Calibre-News-autoget")
+
 	if opt in ("--news-add") :
 		add_news = val
 		config = configset.readconfig("{}/config.json".format(_path))
@@ -58,23 +69,24 @@ for opt, val in opts :
 		print("OK")
 
 	if opt in ("--news-custom-add") :
-		news = input('请输入名称：')
-		news_url = input('请输入rss地址：')
+		rss = val.split("=")[0]
+		rss_url = val.split("=")[1]
+
 		config = configset.readconfig("{}/recipes/recipe.json".format(_path))
 
 		exist = False
 
 		for newslist in config :
-			if news in newslist :
+			if rss in newslist :
 				print("RSS已存在")
 				exist = True
 		if exist == False :		
-			config.append([news, news_url])
+			config.append([rss, rss_url])
 			configset.writeconfig("{}/recipes/recipe.json".format(_path), config)
-			configset.add_recipe("{}/recipes/{}.recipe".format(_path, news), "{}/recipes/recipe.json".format(_path), news, news_url)
+			configset.add_recipe("{}/recipes/{}.recipe".format(_path, rss), "{}/recipes/recipe.json".format(_path), rss, rss_url)
 
 	if opt in ("--news-custom-remove") :
-		news = input('请输入名称：')
+		news = val
 		config = configset.readconfig("{}/recipes/recipe.json".format(_path))
 		exist = 0
 
